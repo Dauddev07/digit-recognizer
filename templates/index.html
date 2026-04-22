@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--
+    DOCTYPE html: tells the browser this is a modern HTML5 page
+    lang="en": tells screen readers and search engines this is English
+  -->
+    <meta charset="UTF-8" />
+    <!--
+    charset="UTF-8": supports all characters (letters, symbols, etc.)
+    viewport meta: makes the page look correct on phones and tablets
+  -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digit Recognizer — CNN + MNIST</title>
+
+    <!-- Link to our external CSS file for styling -->
+    <link rel="stylesheet" href="/static/style.css" />
+
+    <!--
+    We also load Google Fonts for a clean, modern look.
+    'Inter' is a popular sans-serif font used in many tech apps.
+    This requires an internet connection to load.
+  -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <!-- ============================================================
+       MAIN CONTAINER
+       Everything inside this div is centered on the page
+       ============================================================ -->
+    <div class="page-wrapper">
+      <!-- ---- HEADER ---- -->
+      <header class="app-header">
+        <div class="header-icon">✏️</div>
+        <h1 class="app-title">Digit Recognizer</h1>
+        <p class="app-subtitle">
+          Draw any digit (0–9) below and let the AI guess it.<br />
+          Powered by a CNN trained on 60,000 MNIST images.
+        </p>
+      </header>
+
+      <!-- ---- MAIN CARD ---- -->
+      <main class="main-card">
+        <!-- ---- LEFT PANEL: Canvas Drawing Area ---- -->
+        <section class="canvas-panel">
+          <h2 class="panel-label">Draw Here</h2>
+
+          <!-- Canvas wrapper adds the border and shadow around the canvas -->
+          <div class="canvas-wrapper">
+            <!--
+            The <canvas> element is a blank drawing surface.
+            width and height are set in pixels.
+            Our canvas is 280x280 (10× the 28x28 MNIST image size).
+            JavaScript will handle all drawing interactions.
+            id="drawingCanvas" lets JavaScript find this element.
+          -->
+            <canvas id="drawingCanvas" width="280" height="280"></canvas>
+
+            <!-- Overlay text shown before user draws anything -->
+            <div class="canvas-hint" id="canvasHint">
+              <span class="hint-icon">👇</span>
+              <span>Draw a digit here</span>
+            </div>
+          </div>
+
+          <!-- Brush size control -->
+          <div class="brush-control">
+            <label for="brushSize" class="brush-label">
+              Brush Size: <span id="brushSizeValue">18</span>px
+            </label>
+            <!--
+            range input creates a slider.
+            min/max/value set the range and default.
+            oninput: updates the displayed number when slider moves
+          -->
+            <input
+              type="range"
+              id="brushSize"
+              min="8"
+              max="32"
+              value="18"
+              oninput="
+                document.getElementById('brushSizeValue').textContent =
+                  this.value
+              "
+            />
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="button-group">
+            <!--
+            onclick="predict()" calls the predict() function in script.js
+            onclick="clearCanvas()" calls the clearCanvas() function in script.js
+          -->
+            <button class="btn btn-predict" onclick="predict()">
+              <span class="btn-icon">🔍</span> Predict Digit
+            </button>
+            <button class="btn btn-clear" onclick="clearCanvas()">
+              <span class="btn-icon">🗑️</span> Clear
+            </button>
+          </div>
+        </section>
+
+        <!-- ---- DIVIDER ---- -->
+        <div class="panel-divider"></div>
+
+        <!-- ---- RIGHT PANEL: Results Area ---- -->
+        <section class="result-panel">
+          <h2 class="panel-label">AI Prediction</h2>
+
+          <!-- ---- Default State (shown before any prediction) ---- -->
+          <div class="result-idle" id="resultIdle">
+            <div class="idle-icon">🤖</div>
+            <p class="idle-text">Draw a digit and<br />click "Predict Digit"</p>
+          </div>
+
+          <!-- ---- Loading State (shown while waiting for API response) ---- -->
+          <!--
+          hidden class: display:none (invisible by default)
+          JavaScript will add/remove this class to show/hide sections
+        -->
+          <div class="result-loading hidden" id="resultLoading">
+            <div class="spinner"></div>
+            <p class="loading-text">Analyzing...</p>
+          </div>
+
+          <!-- ---- Result State (shown after prediction returns) ---- -->
+          <div class="result-display hidden" id="resultDisplay">
+            <!-- Large digit display -->
+            <div class="predicted-digit-wrapper">
+              <div class="predicted-digit-label">Predicted Digit</div>
+              <!--
+              id="predictedDigit": JavaScript will set the text here
+              e.g., it will show "7"
+            -->
+              <div class="predicted-digit" id="predictedDigit">—</div>
+            </div>
+
+            <!-- Confidence bar -->
+            <div class="confidence-section">
+              <div class="confidence-header">
+                <span class="confidence-label">Confidence</span>
+                <span class="confidence-value" id="confidenceValue">0%</span>
+              </div>
+              <!-- The colored bar that fills up based on confidence -->
+              <div class="confidence-bar-track">
+                <!--
+                id="confidenceBar": JavaScript sets the width as a percentage
+                e.g., style="width: 94%"
+              -->
+                <div class="confidence-bar-fill" id="confidenceBar"></div>
+              </div>
+            </div>
+
+            <!-- Probability breakdown for all 10 digits -->
+            <div class="breakdown-section">
+              <h3 class="breakdown-title">All Digit Probabilities</h3>
+              <!--
+              id="probabilityBars": JavaScript will inject 10 rows here,
+              one for each digit (0-9) showing its probability
+            -->
+              <div class="probability-grid" id="probabilityBars"></div>
+            </div>
+          </div>
+
+          <!-- ---- Error State ---- -->
+          <div class="result-error hidden" id="resultError">
+            <div class="error-icon">⚠️</div>
+            <p class="error-message" id="errorMessage">Something went wrong.</p>
+            <p class="error-hint">
+              Make sure app.py is running and the model is trained.
+            </p>
+          </div>
+        </section>
+        <!-- end result-panel -->
+      </main>
+      <!-- end main-card -->
+
+      <!-- ---- FOOTER ---- -->
+      <footer class="app-footer">
+        <p>CNN Model · TensorFlow/Keras · MNIST Dataset · Flask Backend</p>
+        <p class="footer-accuracy">Typical test accuracy: ~99%</p>
+      </footer>
+    </div>
+    <!-- end page-wrapper -->
+
+    <!--
+    Load our JavaScript file at the BOTTOM of the body.
+    This is important: the HTML elements must exist before
+    JavaScript tries to find them using getElementById().
+    If we put this in <head>, the elements wouldn't exist yet.
+  -->
+    <script src="/static/script.js"></script>
+  </body>
+</html>

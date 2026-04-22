@@ -1,0 +1,656 @@
+/* ============================================================
+   style.css
+   All visual styling for the Digit Recognizer app.
+   CSS (Cascading Style Sheets) controls colors, sizes,
+   spacing, fonts, and layout.
+   ============================================================ */
+
+/* ---- RESET & BASE STYLES ---- */
+/* Remove default browser spacing and set box-sizing */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  /* border-box means: width includes padding and border */
+  box-sizing: border-box;
+}
+
+/* ---- CSS CUSTOM PROPERTIES (Variables) ---- */
+/* Define our color palette once here, use everywhere below */
+/* To change the theme, just edit these values */
+:root {
+  --bg-gradient-start: #0f0c29;
+  --bg-gradient-mid: #302b63;
+  --bg-gradient-end: #24243e;
+
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+
+  --accent-primary: #7c3aed; /* Purple */
+  --accent-secondary: #a78bfa; /* Light purple */
+  --accent-success: #10b981; /* Green */
+  --accent-danger: #ef4444; /* Red */
+  --accent-warning: #f59e0b; /* Amber */
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --canvas-bg: #111827;
+  --canvas-border: #374151;
+
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+}
+
+/* ---- BODY ---- */
+body {
+  font-family: var(--font-family);
+  /* Gradient background from deep purple to dark navy */
+  background: linear-gradient(
+    135deg,
+    var(--bg-gradient-start) 0%,
+    var(--bg-gradient-mid) 50%,
+    var(--bg-gradient-end) 100%
+  );
+  /* min-height: 100vh = at least the full screen height */
+  min-height: 100vh;
+  color: var(--text-primary);
+  /* Remove horizontal scrollbar if content is slightly too wide */
+  overflow-x: hidden;
+  /* Smooth font rendering on Mac */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- PAGE WRAPPER ---- */
+/* Centers everything vertically and horizontally */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center horizontally */
+  justify-content: center; /* Center vertically */
+  padding: 40px 20px;
+  gap: 32px;
+}
+
+/* ---- HEADER ---- */
+.app-header {
+  text-align: center;
+  max-width: 600px;
+  animation: fadeInDown 0.6s ease;
+}
+
+.header-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  display: block;
+  filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.6));
+}
+
+.app-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  /* clamp(min, preferred, max): responsive font size */
+  font-weight: 800;
+  letter-spacing: -1px;
+  /* Gradient text effect */
+  background: linear-gradient(135deg, #a78bfa, #818cf8, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.app-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ---- MAIN CARD ---- */
+.main-card {
+  display: flex;
+  flex-direction: row; /* Side by side on desktop */
+  gap: 0;
+  background: var(--card-bg);
+  /* Glassmorphism effect: blurred translucent card */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  width: 100%;
+  max-width: 860px;
+  animation: fadeInUp 0.6s ease 0.1s both;
+}
+
+/* ---- PANEL DIVIDER (vertical line between panels) ---- */
+.panel-divider {
+  width: 1px;
+  background: var(--card-border);
+  /* flex-shrink: 0 prevents it from being squished */
+  flex-shrink: 0;
+}
+
+/* ---- CANVAS PANEL (left side) ---- */
+.canvas-panel {
+  flex: 1;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ---- RESULT PANEL (right side) ---- */
+.result-panel {
+  flex: 1;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ---- PANEL LABEL (section headings) ---- */
+.panel-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  width: 100%;
+  text-align: center;
+}
+
+/* ---- CANVAS WRAPPER ---- */
+.canvas-wrapper {
+  position: relative; /* Needed to position the hint overlay on top */
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--canvas-border);
+  /* Subtle glow effect on the canvas border */
+  box-shadow:
+    0 0 0 1px rgba(124, 58, 237, 0.2),
+    0 0 30px rgba(124, 58, 237, 0.1),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+/* When user starts drawing, make the border glow brighter */
+.canvas-wrapper:hover,
+.canvas-wrapper.active {
+  box-shadow:
+    0 0 0 2px rgba(124, 58, 237, 0.5),
+    0 0 40px rgba(124, 58, 237, 0.2),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* The actual <canvas> element */
+#drawingCanvas {
+  display: block;
+  background: var(--canvas-bg);
+  cursor: crosshair; /* Show crosshair cursor when hovering canvas */
+}
+
+/* ---- CANVAS HINT OVERLAY ---- */
+/* Shown before user draws, hidden once drawing begins */
+.canvas-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Perfect centering */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  pointer-events: none; /* Don't block mouse events on the canvas */
+  transition: opacity 0.3s ease;
+  text-align: center;
+}
+
+.canvas-hint.hidden {
+  opacity: 0;
+}
+
+.hint-icon {
+  font-size: 1.5rem;
+  animation: bounce 1.5s ease infinite;
+}
+
+/* ---- BRUSH CONTROL ---- */
+.brush-control {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.brush-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Style the range slider */
+input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* The draggable thumb of the slider */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+  transition: transform 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* ---- BUTTON GROUP ---- */
+.button-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ---- BUTTONS ---- */
+.btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+/* Predict button: purple gradient */
+.btn-predict {
+  background: linear-gradient(135deg, var(--accent-primary), #6d28d9);
+  color: white;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+.btn-predict:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5);
+}
+
+.btn-predict:active {
+  transform: translateY(0);
+}
+
+/* Clear button: transparent with border */
+.btn-clear {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--card-border);
+}
+
+.btn-clear:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-danger);
+  border-color: rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ---- RESULT IDLE STATE ---- */
+.result-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 300px;
+  width: 100%;
+}
+
+.idle-icon {
+  font-size: 3.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+.idle-text {
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ---- LOADING STATE ---- */
+.result-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 300px;
+  width: 100%;
+}
+
+/* CSS-only spinning animation */
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(167, 139, 250, 0.2);
+  border-top-color: var(--accent-secondary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* ---- RESULT DISPLAY STATE ---- */
+.result-display {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeInUp 0.4s ease;
+}
+
+/* Large digit display */
+.predicted-digit-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.predicted-digit-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+
+.predicted-digit {
+  font-size: 6rem;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, #a78bfa, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* Subtle glow on the digit */
+  filter: drop-shadow(0 0 30px rgba(167, 139, 250, 0.4));
+  transition: all 0.3s ease;
+}
+
+/* ---- CONFIDENCE BAR ---- */
+.confidence-section {
+  width: 100%;
+}
+
+.confidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.confidence-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.confidence-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+}
+
+.confidence-bar-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.confidence-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  /* Gradient fill that changes color based on confidence */
+  background: linear-gradient(
+    90deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  width: 0%; /* Start at 0, JavaScript will animate to the real value */
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+}
+
+/* ---- PROBABILITY BREAKDOWN ---- */
+.breakdown-section {
+  width: 100%;
+}
+
+.breakdown-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.probability-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Each row in the probability grid */
+.prob-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prob-digit-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.prob-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: rgba(124, 58, 237, 0.5);
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+/* The predicted digit's row is highlighted */
+.prob-bar-fill.is-predicted {
+  background: linear-gradient(
+    90deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  box-shadow: 0 0 6px rgba(167, 139, 250, 0.4);
+}
+
+.prob-percent-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ---- ERROR STATE ---- */
+.result-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 300px;
+  width: 100%;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 2.5rem;
+}
+
+.error-message {
+  color: var(--accent-danger);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.error-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* ---- FOOTER ---- */
+.app-footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.8;
+  animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+.footer-accuracy {
+  color: var(--accent-success);
+  font-weight: 600;
+}
+
+/* ---- UTILITY CLASSES ---- */
+/* hidden: completely removes element from layout */
+.hidden {
+  display: none !important;
+}
+
+/* ---- ANIMATIONS ---- */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px rgba(124, 58, 237, 0.6),
+      0 0 20px rgba(124, 58, 237, 0.3);
+  }
+}
+
+/* ---- RESPONSIVE DESIGN ---- */
+/* On screens narrower than 700px (phones/tablets), stack vertically */
+@media (max-width: 700px) {
+  .main-card {
+    flex-direction: column;
+  }
+
+  .panel-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .canvas-panel,
+  .result-panel {
+    padding: 28px 20px;
+  }
+
+  .predicted-digit {
+    font-size: 4.5rem;
+  }
+}

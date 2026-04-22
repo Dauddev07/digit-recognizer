@@ -8,20 +8,13 @@ import tensorflow as tf
 
 app = Flask(__name__)
 
+# Load the pre-trained model on startup
 MODEL_PATH = "model/digit_recognizer.keras"
 
-def load_or_train_model():
-    if not os.path.exists("model"):
-        os.makedirs("model")
-    if not os.path.exists(MODEL_PATH):
-        print("Model not found. Training now — this takes a few minutes...")
-        import subprocess
-        subprocess.run(["python", "train_model.py"], check=True)
-        print("Training complete!")
-    print("Loading model...")
-    return tf.keras.models.load_model(MODEL_PATH)
-
-model = load_or_train_model()
+print("Loading model...")
+model = tf.keras.models.load_model(MODEL_PATH)
+print("Model loaded successfully!")
+print("Server is ready to make predictions.")
 
 @app.route("/")
 def index():
@@ -29,9 +22,6 @@ def index():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-
-    if model is None:
-        return jsonify({"error": "Model not loaded. Run train_model.py first."}), 500
 
     try:
         data = request.get_json()
